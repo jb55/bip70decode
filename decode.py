@@ -7,7 +7,7 @@ import binascii
 import datetime
 import paymentrequest_pb2
 import urllib.parse
-http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED')
+import urllib.request
 
 
 def url_from_input(addr):
@@ -21,9 +21,11 @@ def address_from_script(p2pkh):
 
 
 def decode_pr(addr):
-    dat = http.request('GET', url_from_input(addr), headers={'Accept': 'application/bitcoin-paymentrequest'}).data
-    req = paymentrequest_pb2.PaymentRequest().FromString(dat)
-    return paymentrequest_pb2.PaymentDetails().FromString(req.serialized_payment_details)
+    req = urllib.request.Request(url_from_input(addr), headers={'Accept': 'application/bitcoin-paymentrequest'})
+    with urllib.request.urlopen(req) as f:
+        dat = f.read()
+        req = paymentrequest_pb2.PaymentRequest().FromString(dat)
+        return paymentrequest_pb2.PaymentDetails().FromString(req.serialized_payment_details)
 
 
 def print_pr(pr):
